@@ -2,26 +2,40 @@ import XCTest
 @testable import MathParsing
 
 final class PostfixTokensTests: XCTestCase {
-    func testAdd() {
+    func testPostfixCombinations() throws {
+        let infixTokens: [Token] = [
+            .number(2),
+            .binaryOperator(.mul),
+            .number(Combinations(n: 5, k: 2)),
+        ]
+
+        let postfix: [Token] = [
+            .number(2),
+            .number(10),
+            .binaryOperator(.mul),
+        ]
+        let actual = try infixTokens.infixToPostfix()
+        XCTAssertEqual(actual, postfix)
+    }
+
+    func testAdd() throws {
         let infixTokens: [Token] = [
             .number(2),
             .binaryOperator(.add),
             .number(3),
         ]
 
-        let expected: [Token] = [
+        let postfix: [Token] = [
             .number(2),
             .number(3),
             .binaryOperator(.add),
         ]
 
-        let e = MathExpression(infixTokens: infixTokens)
-        let actual = e.postfixTokens()
-
-        XCTAssertEqual(actual, expected)
+        let actual = try infixTokens.infixToPostfix()
+        XCTAssertEqual(actual, postfix)
     }
 
-    func testPrecedence() {
+    func testPrecedence() throws {
         let infixTokens: [Token] = [
             .number(2),
             .binaryOperator(.add),
@@ -30,7 +44,7 @@ final class PostfixTokensTests: XCTestCase {
             .number(4),
         ]
 
-        let expected: [Token] = [
+        let postfix: [Token] = [
             .number(2),
             .number(3),
             .number(4),
@@ -38,12 +52,11 @@ final class PostfixTokensTests: XCTestCase {
             .binaryOperator(.add),
         ]
 
-        let e = MathExpression(infixTokens: infixTokens)
-        let actual = e.postfixTokens()
-        XCTAssertEqual(actual, expected)
+        let actual = try infixTokens.infixToPostfix()
+        XCTAssertEqual(actual, postfix)
     }
 
-    func testNegation() {
+    func testNegation() throws {
         let infixTokens: [Token] = [
             .number(60),
             .binaryOperator(.div),
@@ -66,7 +79,7 @@ final class PostfixTokensTests: XCTestCase {
             .number(2),
         ]
 
-        let expected: [Token] = [
+        let postfix: [Token] = [
             .number(60),
             .number(2),
             .number(1),
@@ -84,8 +97,55 @@ final class PostfixTokensTests: XCTestCase {
             .binaryOperator(.add),
         ]
 
-        let e = MathExpression(infixTokens: infixTokens)
-        let actual = e.postfixTokens()
-        XCTAssertEqual(actual, expected)
+        let actual = try infixTokens.infixToPostfix()
+        XCTAssertEqual(actual, postfix)
+    }
+}
+
+final class evalPostfixTests: XCTestCase {
+    func testAdd() throws {
+        let postfix: [Token] = [
+            .number(2),
+            .number(3),
+            .binaryOperator(.add),
+        ]
+
+        let actual = try postfix.evaluateAsPostfix()
+        XCTAssertEqual(actual, 5)
+    }
+
+    func testPrecedence() throws {
+        let postfix: [Token] = [
+            .number(2),
+            .number(3),
+            .number(4),
+            .binaryOperator(.mul),
+            .binaryOperator(.add),
+        ]
+
+        let actual = try postfix.evaluateAsPostfix()
+        XCTAssertEqual(actual, 14)
+    }
+
+    func testNegation() throws {
+        let postfix: [Token] = [
+            .number(60),
+            .number(2),
+            .number(1),
+            .number(1),
+            .binaryOperator(.add),
+            .unaryOperator(.neg),
+            .binaryOperator(.mul),
+            .number(2),
+            .binaryOperator(.add),
+            .unaryOperator(.neg),
+            .binaryOperator(.div),
+            .number(3),
+            .number(2),
+            .binaryOperator(.mul),
+            .binaryOperator(.add),
+        ]
+        let actual = try postfix.evaluateAsPostfix()
+        XCTAssertEqual(actual, 36)
     }
 }
