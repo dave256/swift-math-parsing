@@ -7,7 +7,6 @@
 
 public func factorial(_ n: Int) -> Int64 {
     (2...Int64(n)).reduce(Int64(1), *)
-
 }
 
 public struct Combinations: Int64Convertible {
@@ -16,7 +15,13 @@ public struct Combinations: Int64Convertible {
     public private(set) var k: Int
 
     public var eval: Int64 {
-        factorial(n) / factorial(k) / factorial(n - k)
+        if k > n - k {
+            let num = (Int64(k+1)...Int64(n)).reduce(1, *)
+            return num / factorial(n - k)
+        } else {
+            let num = (Int64(n-k+1)...Int64(n)).reduce(1, *)
+            return num / factorial(k)
+        }
     }
 
     public init(n: Int, k: Int) {
