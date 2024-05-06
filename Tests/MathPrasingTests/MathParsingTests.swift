@@ -6,7 +6,7 @@ final class InfixToPostfixTests: XCTestCase {
         let infixTokens: [Token] = [
             .number(2),
             .binaryOperator(.mul),
-            .number(Combinations(n: 5, k: 2)),
+            .numberConvertible(Combinations(n: 5, k: 2)),
         ]
 
         let postfix: [Token] = [
@@ -167,7 +167,7 @@ final class InfixToPostfixTests: XCTestCase {
     }
 }
 
-final class evalPostfixTests: XCTestCase {
+final class EvalPostfixTests: XCTestCase {
     func testAdd() throws {
         let postfix: [Token] = [
             .number(2),
@@ -226,4 +226,32 @@ final class evalPostfixTests: XCTestCase {
         let actual = try postfix.evaluateAsPostfix()
         XCTAssertEqual(actual, 36)
     }
+}
+
+final class EquationTest: XCTestCase {
+
+    func testAdd() throws {
+        var e = Equation()
+        e.addDigit(2)
+        e.addDigit(3)
+        e.addOperator(.add)
+        e.addNumber(45)
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 68)
+    }
+
+    func testAddString() throws {
+        if let e = Equation(infixString: "23+ 45") {
+            let actual = try e.evaluate()
+            XCTAssertEqual(actual, 68)
+        } else { XCTFail() }
+    }
+
+    func testNegationString() throws {
+        if let e = Equation(infixString: "60/-(2 + -(1 + 1) * 2) + 3 * 2") {
+            let actual = try e.evaluate()
+            XCTAssertEqual(actual, 36)
+        } else { XCTFail() }
+    }
+
 }

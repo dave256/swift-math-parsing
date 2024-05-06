@@ -153,7 +153,8 @@ public enum Token {
     case rightParen
     case binaryOperator(BinaryOperator)
     case unaryOperator(UnaryOperator)
-    case number(Int64Convertible)
+    case number(Int64)
+    case numberConvertible(Int64Convertible)
 }
 
 extension Token {
@@ -201,6 +202,24 @@ extension Token {
                 return false
         }
     }
+
+    var number: Int64? {
+        switch self {
+            case .number(let num):
+                return num
+            default:
+                return nil
+        }
+    }
+
+    var isNumberConvertible: Bool {
+        switch self {
+            case .numberConvertible(_):
+                return true
+            default:
+                return false
+        }
+    }
 }
 
 extension Token: Precedence {
@@ -214,7 +233,7 @@ extension Token: Precedence {
                 return op.precedence
             case .unaryOperator(let op):
                 return op.precedence
-            case .number(_):
+            case .number(_), .numberConvertible(_):
                 return 0
         }
     }
@@ -253,6 +272,8 @@ extension Token: CustomStringConvertible {
             case .unaryOperator(let op):
                 return String(describing: op)
             case .number(let num):
+                return "\(num)"
+            case .numberConvertible(let num):
                 return "\(num.eval)"
         }
     }
@@ -311,7 +332,7 @@ extension [Token] {
                 case .unaryOperator(_):
                     // unary operands are pushed
                     stack.push(token)
-                case .number(_):
+                case .number(_), .numberConvertible(_):
                     // numbers are added to postfix expression
                     postfix.append(token)
             }
@@ -349,7 +370,11 @@ extension [Token] {
                         throw PostfixError.unaryOperatorMissingOperand(String(describing: op), self, idx)
                     }
                     stack.push(op.evaluate(value: num))
+
                 case .number(let value):
+                    stack.push(value)
+
+                case .numberConvertible(let value):
                     stack.push(value.eval)
             }
         }
@@ -358,4 +383,171 @@ extension [Token] {
         }
         return stack.pop()!
     }
+}
+
+// MARK: AllowedToken
+
+public struct AllowedToken: OptionSet {
+
+    public let rawValue: Int
+
+    public init(rawValue: Int) {
+        self.rawValue = rawValue
+    }
+
+    static let digit = AllowedToken(rawValue: 1 << 0)
+    static let number = AllowedToken(rawValue: 1 << 1)
+    static let numberConvertible = AllowedToken(rawValue: 1 << 2)
+    static let leftParen = AllowedToken(rawValue: 1 << 3)
+    static let rightParen = AllowedToken(rawValue: 1 << 4)
+    static let binaryOperator = AllowedToken(rawValue: 1 << 5)
+    static let unaryOperator = AllowedToken(rawValue: 1 << 6)
+}
+
+// MARK: Equation
+public struct Equation {
+    var tokens: [Token] = []
+
+    public init?(infixString: String) {
+        for ch in infixString {
+            guard ch.isASCII else { return nil }
+            let allow = allowableTokens
+            if let digit = ch.wholeNumberValue {
+                if allow.contains(.digit) {
+                    addDigit(digit)
+                } else { return nil }
+            } else if ch == "(" {
+                if allow.contains(.leftParen) {
+                    addLeftParen()
+                } else { return nil }
+            } else if ch == ")" {
+                if allow.contains(.rightParen) {
+                    addRightParen()
+                } else { return nil }
+            } else if ch == "+" {
+                if allow.contains(.binaryOperator) || allow.contains(.unaryOperator) {
+                    addOperator(.add)
+                }
+            } else if ch == "-" {
+                let allow = allowableTokens
+                if allow.contains(.binaryOperator) || allow.contains(.unaryOperator) {
+                    addOperator(.sub)
+                } else { return nil }
+            } else if ch == "*" {
+                if allow.contains(.binaryOperator) {
+                    addOperator(.mul)
+                } else { return nil }
+            } else if ch == "/" {
+                if allow.contains(.binaryOperator) {
+                    addOperator(.div)
+                } else { return nil }
+            } else if ch == "%" {
+                if allow.contains(.binaryOperator) {
+                    addOperator(.mod)
+                } else { return nil }
+            } else if ch == "^" {
+                if allow.contains(.binaryOperator) {
+                    addOperator(.pow)
+                } else { return nil }
+            } else if ch != " " {
+                return nil
+            }
+        }
+    }
+
+    public init(tokens: [Token] = []) {
+        self.tokens = tokens
+    }
+
+    public var allowableTokens: AllowedToken {
+        guard let lastToken = tokens.last else {
+            return [.digit, .number, .numberConvertible, .leftParen, .unaryOperator]
+        }
+        switch lastToken {
+
+            case .leftParen:
+                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+
+            case .rightParen:
+                if unmatchedLeftParenCount > 0 {
+                    return [.binaryOperator, .rightParen]
+                } else {
+                    return [.binaryOperator]
+                }
+
+            case .binaryOperator(_):
+                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+
+            case .unaryOperator(_):
+                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+
+            case .number(_):
+                if unmatchedLeftParenCount > 0 {
+                    return [.digit, .binaryOperator, .rightParen]
+                } else {
+                    return [.digit, .binaryOperator]
+                }
+
+            case .numberConvertible(_):
+                if unmatchedLeftParenCount > 0 {
+                    return [.binaryOperator, .rightParen]
+                } else {
+                    return [.binaryOperator]
+                }
+        }
+    }
+
+    public mutating func addDigit(_ digit: Int) {
+        if let lastToken = tokens.last, let num = lastToken.number {
+            tokens.removeLast()
+            tokens.append(.number(num * 10 + Int64(digit)))
+        } else {
+            tokens.append(.number(Int64(digit)))
+        }
+    }
+
+    public mutating func addNumber(_ num: Int64) {
+        tokens.append(.number(num))
+    }
+
+    public mutating func addNumberConvertible(_ value: Int64Convertible) {
+        tokens.append(.numberConvertible(value))
+    }
+
+    public mutating func addOperator(_ op: BinaryOperator) {
+        let allowed = allowableTokens
+        if allowed.contains(.binaryOperator) {
+            tokens.append(.binaryOperator(op))
+        } else {
+            switch op {
+                case .add:
+                    tokens.append(.unaryOperator(.plus))
+                case .sub:
+                    tokens.append(.unaryOperator(.neg))
+                default:
+                    print("shouldn't happen")
+            }
+        }
+    }
+
+    public mutating func addUnaryOperator(_ op: UnaryOperator) {
+        tokens.append(.unaryOperator(op))
+    }
+
+    public mutating func addLeftParen() {
+        unmatchedLeftParenCount += 1
+        tokens.append(.leftParen)
+    }
+
+    public mutating func addRightParen() {
+        unmatchedLeftParenCount -= 1
+        tokens.append(.rightParen)
+    }
+
+    public func evaluate() throws -> Int64 {
+        let postfixTokens = try tokens.infixToPostfix()
+        return try postfixTokens.evaluateAsPostfix()
+    }
+
+    private var unmatchedLeftParenCount = 0
 }
