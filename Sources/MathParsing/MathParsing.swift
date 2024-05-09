@@ -576,6 +576,21 @@ public struct Equation {
         tokens.append(.rightParen)
     }
 
+    public mutating func deleteLast() {
+        guard let lastToken = tokens.last, let currentNum = lastToken.number else {
+            tokens.removeLast()
+            return
+        }
+        let newNum: Int64
+        if currentNum < 0 {
+            newNum = -((-currentNum) / 10)
+        } else {
+            newNum = currentNum / 10
+        }
+        tokens.removeLast()
+        tokens.append(.number(newNum))
+    }
+
     public func evaluate(overrideVariable: [String: Int64]? = nil) throws -> Int64 {
         let postfixTokens = try tokens.infixToPostfix()
         let varDict = overrideVariable ?? variableValues
