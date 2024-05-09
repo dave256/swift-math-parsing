@@ -539,7 +539,11 @@ public struct Equation {
     }
 
     public mutating func addNumberConvertible(_ value: Int64Convertible) {
-        tokens.append(.numberConvertible(value))
+        if tokens.count == 1, let token = tokens.last, let num = token.number, num == 0 {
+            tokens = [.numberConvertible(value)]
+        } else {
+            tokens.append(.numberConvertible(value))
+        }
     }
 
     public mutating func addVariable(_ name: String) {
