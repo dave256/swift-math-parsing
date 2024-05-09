@@ -128,7 +128,7 @@ public struct Stirling2: Int64Convertible {
     public init(n: Int, k: Int) {
         self.n = n
         self.k = k
-        eval = OntoFunctions(n: n, k: k).eval * Falling(n: n, k: n).eval
+        eval = OntoFunctions(n: n, k: k).eval / Falling(n: n, k: n).eval
     }
 }
 
