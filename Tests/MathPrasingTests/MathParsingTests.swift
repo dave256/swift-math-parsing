@@ -255,6 +255,17 @@ final class EquationTest: XCTestCase {
     }
 }
 
+final class IntegerPartitionTests: XCTestCase {
+    func testAnyAnyOnto() throws {
+        let n = 7
+        let k = 10
+        let expected: Int64 = 3
+
+        let actual = IntegerPartition(n: n, k: k).eval
+        XCTAssertEqual(actual, expected)
+    }
+}
+
 final class SummationTest: XCTestCase {
 
     func testIdentity() throws {
