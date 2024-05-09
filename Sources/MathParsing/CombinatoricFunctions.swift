@@ -25,7 +25,7 @@ public struct Combinations: Int64Convertible {
         if k > n {
             eval = 0
         }
-        else if n == k {
+        else if n == k || k == 0 {
             eval = 1
         }
         else if k > n - k {
@@ -112,11 +112,11 @@ public struct OntoFunctions: Int64Convertible {
     public init(n: Int, k: Int) {
         self.n = n
         self.k = k
-        var total = 0
-        for i in 1...n {
-            total = total + Int(power(Int64(i), Int64(n)) * power(-1, Int64(n - i)) * Combinations(n: n, k: i).eval)
+        var total: Int64 = 0
+        for i in 0...n {
+            total = total + power(Int64(i), Int64(k)) * power(-1, Int64(n - i)) * Combinations(n: n, k: i).eval
         }
-        eval = Int64(total)
+        eval = total
     }
 }
 

@@ -266,6 +266,19 @@ final class IntegerPartitionTests: XCTestCase {
     }
 }
 
+final class CombinatoricFunctionTests: XCTestCase {
+    func testOnto() {
+        let actual = OntoFunctions(n: 3, k: 7).eval
+        XCTAssertEqual(actual, 1806)
+
+    }
+
+    func testStirling() {
+        let actual = Stirling2(n: 3, k: 7).eval
+        XCTAssertEqual(actual, 301)
+    }
+}
+
 final class SummationTest: XCTestCase {
 
     func testIdentity() throws {
