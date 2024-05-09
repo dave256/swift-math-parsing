@@ -220,11 +220,32 @@ public func twelveFold(n: Int, k: Int, balls: Kind, boxes: Kind, distribution: D
     switch (balls, boxes, distribution) {
 
         case (.alike, .alike, .any):
-            return Combinations(n: n, k: k)
+            return MultiPartition(n: n, k: k)
+        case (.alike, .alike, .oneToOne):
+            return Injection(n: n, k: k)
+        case (.alike, .alike, .onto):
+            return IntegerPartition(n: n, k: k)
 
-        default:
+        case (.alike, .different, .any):
+            return Multichoose(n: n, k: k)
+        case (.alike, .different, .oneToOne):
             return Combinations(n: n, k: k)
+        case (.alike, .different, .onto):
+            return MultichooseOnto(n: n, k: k)
 
+        case (.different, .alike, .any):
+            return MultiStirling2(n: n, k: k)
+        case (.different, .alike, .oneToOne):
+            return Injection(n: n, k: k)
+        case (.different, .alike, .onto):
+            return Stirling2(n: n, k: k)
+
+        case (.different, .different, .any):
+            return PermutationsWithRepetition(n: n, k: k)
+        case (.different, .different, .oneToOne):
+            return Falling(n: n, k: k)
+        case (.different, .different, .onto):
+            return OntoFunctions(n: n, k: k)
 
     }
 
