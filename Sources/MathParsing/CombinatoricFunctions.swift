@@ -153,14 +153,18 @@ public struct IntegerPartition: Int64Convertible {
                 if i == 0 {
                     partition[j][i] = 1
                 } else {
-                    if j - i <= 0 && j != 0 {
+                    if j == 0 {
+
+                    }
+                    else if j - i <= 0 {
                         partition[j][i] = partition[j - 1][i - 1]
-                    } else if j != 0 {
+                    } else {
                         partition[j][i] = partition[j - 1][i - 1] + partition[j - 1 - i][i]
                     }
                 }
             }
         }
+        print(partition)
         eval = partition[k - 1][n - 1]
     }
 }
