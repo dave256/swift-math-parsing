@@ -6,7 +6,11 @@
 //
 
 func factorial(_ n: Int) -> Int64 {
-    (2...Int64(n)).reduce(Int64(1), *)
+    if n < 2 {
+        return 1
+    } else {
+        return (2...Int64(n)).reduce(Int64(1), *)
+    }
 }
 
 public struct Combinations: Int64Convertible {
