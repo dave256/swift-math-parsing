@@ -145,6 +145,8 @@ enum PostfixError: Error {
     case unaryOperatorMissingOperand(String, [Token], Int)
     /// number of items on stack, Tokens,
     case notOneValueOnStack(Int, [Token])
+    /// missing value for variable
+    case missingVariableValue(String)
 }
 
 // MARK: Token
@@ -155,6 +157,7 @@ public enum Token {
     case unaryOperator(UnaryOperator)
     case number(Int64)
     case numberConvertible(Int64Convertible)
+    case variable(String)
 }
 
 extension Token {
@@ -235,6 +238,8 @@ extension Token: Precedence {
                 return op.precedence
             case .number(_), .numberConvertible(_):
                 return 0
+            case .variable(_):
+                return 0
         }
     }
 }
@@ -253,6 +258,8 @@ extension Token: Equatable {
                 return lop == rop
             case (number(let lnum), number(let rnum)):
                 return lnum.eval == rnum.eval
+            case (variable(let leftVar), variable(let rightVar)):
+                return leftVar == rightVar
             default:
                 return true
         }
@@ -275,6 +282,8 @@ extension Token: CustomStringConvertible {
                 return "\(num)"
             case .numberConvertible(let num):
                 return "\(num.eval)"
+            case .variable(let name):
+                return name
         }
     }
 }
@@ -335,6 +344,8 @@ extension [Token] {
                 case .number(_), .numberConvertible(_):
                     // numbers are added to postfix expression
                     postfix.append(token)
+                case .variable(_):
+                    postfix.append(token)
             }
         }
 
@@ -348,7 +359,7 @@ extension [Token] {
     
     /// evaulate the array of `Token` assuming it is a postfix expression
     /// - Returns: result of evaluating the array of Token as a postfix expression
-    public func evaluateAsPostfix() throws -> Int64 {
+    public func evaluateAsPostfix(variableDictionary: [String: Int64] = [:]) throws -> Int64 {
         var stack = Stack<Int64>()
         for (idx, token) in self.enumerated() {
             switch token {
@@ -376,6 +387,10 @@ extension [Token] {
 
                 case .numberConvertible(let value):
                     stack.push(value.eval)
+
+                case .variable(let name):
+                    guard let num = variableDictionary[name] else { throw PostfixError.missingVariableValue(name) }
+                    stack.push(num)
             }
         }
         guard stack.count == 1 else {
@@ -398,21 +413,26 @@ public struct AllowedToken: OptionSet {
     static let digit = AllowedToken(rawValue: 1 << 0)
     static let number = AllowedToken(rawValue: 1 << 1)
     static let numberConvertible = AllowedToken(rawValue: 1 << 2)
-    static let leftParen = AllowedToken(rawValue: 1 << 3)
-    static let rightParen = AllowedToken(rawValue: 1 << 4)
-    static let binaryOperator = AllowedToken(rawValue: 1 << 5)
-    static let unaryOperator = AllowedToken(rawValue: 1 << 6)
+    static let variable = AllowedToken(rawValue: 1 << 3)
+    static let leftParen = AllowedToken(rawValue: 1 << 4)
+    static let rightParen = AllowedToken(rawValue: 1 << 5)
+    static let binaryOperator = AllowedToken(rawValue: 1 << 6)
+    static let unaryOperator = AllowedToken(rawValue: 1 << 7)
 }
 
 // MARK: Equation
 public struct Equation {
     var tokens: [Token] = []
+    var variableValues: [String: Int64]
 
-    public init?(infixString: String) {
+    public init?(infixString: String, variableValues: [String: Int64] = [:]) {
+        self.variableValues = variableValues
         for ch in infixString {
             guard ch.isASCII else { return nil }
             let allow = allowableTokens
-            if let digit = ch.wholeNumberValue {
+            if ch == "k" {
+                addVariable("k")
+            } else if let digit = ch.wholeNumberValue {
                 if allow.contains(.digit) {
                     addDigit(digit)
                 } else { return nil }
@@ -455,18 +475,19 @@ public struct Equation {
         }
     }
 
-    public init(tokens: [Token] = []) {
+    public init(tokens: [Token] = [], variableValues: [String: Int64] = [:]) {
+        self.variableValues = variableValues
         self.tokens = tokens
     }
 
     public var allowableTokens: AllowedToken {
         guard let lastToken = tokens.last else {
-            return [.digit, .number, .numberConvertible, .leftParen, .unaryOperator]
+            return [.digit, .number, .numberConvertible, .variable, .leftParen, .unaryOperator]
         }
         switch lastToken {
 
             case .leftParen:
-                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+                return [.leftParen, .digit, .number, .variable, .numberConvertible, .unaryOperator]
 
             case .rightParen:
                 if unmatchedLeftParenCount > 0 {
@@ -476,10 +497,10 @@ public struct Equation {
                 }
 
             case .binaryOperator(_):
-                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+                return [.leftParen, .digit, .number, .variable, .numberConvertible, .unaryOperator]
 
             case .unaryOperator(_):
-                return [.leftParen, .digit, .number, .numberConvertible, .unaryOperator]
+                return [.leftParen, .digit, .number, .variable, .numberConvertible, .unaryOperator]
 
             case .number(_):
                 if unmatchedLeftParenCount > 0 {
@@ -489,6 +510,13 @@ public struct Equation {
                 }
 
             case .numberConvertible(_):
+                if unmatchedLeftParenCount > 0 {
+                    return [.binaryOperator, .rightParen]
+                } else {
+                    return [.binaryOperator]
+                }
+
+            case .variable(_):
                 if unmatchedLeftParenCount > 0 {
                     return [.binaryOperator, .rightParen]
                 } else {
@@ -512,6 +540,10 @@ public struct Equation {
 
     public mutating func addNumberConvertible(_ value: Int64Convertible) {
         tokens.append(.numberConvertible(value))
+    }
+
+    public mutating func addVariable(_ name: String) {
+        tokens.append(.variable(name))
     }
 
     public mutating func addOperator(_ op: BinaryOperator) {
@@ -544,9 +576,10 @@ public struct Equation {
         tokens.append(.rightParen)
     }
 
-    public func evaluate() throws -> Int64 {
+    public func evaluate(overrideVariable: [String: Int64]? = nil) throws -> Int64 {
         let postfixTokens = try tokens.infixToPostfix()
-        return try postfixTokens.evaluateAsPostfix()
+        let varDict = overrideVariable ?? variableValues
+        return try postfixTokens.evaluateAsPostfix(variableDictionary: varDict)
     }
 
     private var unmatchedLeftParenCount = 0
