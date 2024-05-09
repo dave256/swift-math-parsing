@@ -164,7 +164,6 @@ public struct IntegerPartition: Int64Convertible {
                 }
             }
         }
-        print(partition)
         eval = partition[k - 1][n - 1]
     }
 }
@@ -178,7 +177,7 @@ public struct MultiPartition: Int64Convertible {
         self.n = n
         self.k = k
         var total = 0
-        for i in 1...k {
+        for i in 1...n {
             total = total + Int(IntegerPartition(n: i, k: k).eval)
         }
         eval = Int64(total)
