@@ -502,11 +502,19 @@ public struct Equation {
             case .unaryOperator(_):
                 return [.leftParen, .digit, .number, .variable, .numberConvertible, .unaryOperator]
 
-            case .number(_):
-                if unmatchedLeftParenCount > 0 {
-                    return [.digit, .binaryOperator, .rightParen]
+            case .number(let value):
+                if value != 0 {
+                    if unmatchedLeftParenCount > 0 {
+                        return [.digit, .binaryOperator, .rightParen]
+                    } else {
+                        return [.digit, .binaryOperator]
+                    }
                 } else {
-                    return [.digit, .binaryOperator]
+                    if unmatchedLeftParenCount > 0 {
+                        return [.digit, .binaryOperator, .rightParen, .number, .numberConvertible]
+                    } else {
+                        return [.digit, .binaryOperator, .number, .numberConvertible]
+                    }
                 }
 
             case .numberConvertible(_):
