@@ -199,6 +199,33 @@ public struct Summation: Int64Convertible {
             eval += result
         }
     }
+}
 
+public enum Kind: String, Identifiable, CaseIterable {
+    case different
+    case alike
+
+    public var id: Self { self }
+}
+public enum DistributionType: String, Identifiable, CaseIterable {
+    case any
+    case oneToOne = "1-1"
+    case onto
+
+    public var id: Self { self }
+}
+
+public func twelveFold(n: Int, k: Int, balls: Kind, boxes: Kind, distribution: DistributionType) -> Int64Convertible {
+
+    switch (balls, boxes, distribution) {
+
+        case (.alike, .alike, .any):
+            return Combinations(n: n, k: k)
+
+        default:
+            return Combinations(n: n, k: k)
+
+
+    }
 
 }
