@@ -599,3 +599,10 @@ public struct Equation {
 
     private var unmatchedLeftParenCount = 0
 }
+
+extension Equation: CustomStringConvertible {
+    public var description: String {
+        let tokenStrings = tokens.map { String(describing: $0) }
+        return String(describing: tokenStrings.joined(separator: " "))
+    }
+}
