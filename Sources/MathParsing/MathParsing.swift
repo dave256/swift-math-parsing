@@ -410,14 +410,14 @@ public struct AllowedToken: OptionSet {
         self.rawValue = rawValue
     }
 
-    static let digit = AllowedToken(rawValue: 1 << 0)
-    static let number = AllowedToken(rawValue: 1 << 1)
-    static let numberConvertible = AllowedToken(rawValue: 1 << 2)
-    static let variable = AllowedToken(rawValue: 1 << 3)
-    static let leftParen = AllowedToken(rawValue: 1 << 4)
-    static let rightParen = AllowedToken(rawValue: 1 << 5)
-    static let binaryOperator = AllowedToken(rawValue: 1 << 6)
-    static let unaryOperator = AllowedToken(rawValue: 1 << 7)
+    public static let digit = AllowedToken(rawValue: 1 << 0)
+    public static let number = AllowedToken(rawValue: 1 << 1)
+    public static let numberConvertible = AllowedToken(rawValue: 1 << 2)
+    public static let variable = AllowedToken(rawValue: 1 << 3)
+    public static let leftParen = AllowedToken(rawValue: 1 << 4)
+    public static let rightParen = AllowedToken(rawValue: 1 << 5)
+    public static let binaryOperator = AllowedToken(rawValue: 1 << 6)
+    public static let unaryOperator = AllowedToken(rawValue: 1 << 7)
 }
 
 // MARK: Equation
