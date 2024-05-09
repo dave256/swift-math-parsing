@@ -27,3 +27,25 @@ public struct Combinations: Int64Convertible {
         }
     }
 }
+
+public struct Summation: Int64Convertible {
+    public private(set) var start: Int
+    public private(set) var end: Int
+    public private(set) var equation: Equation
+    public private(set) var eval: Int64
+
+
+    public init?(start: Int, end: Int, equation: Equation) {
+        self.start = start
+        self.end = end
+        self.equation = equation
+
+        eval = 0
+        for k in start...end {
+            guard let result = try? equation.evaluate(overrideVariable: ["k": Int64(k)]) else { return nil }
+            eval += result
+        }
+    }
+
+
+}

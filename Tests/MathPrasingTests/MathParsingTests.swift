@@ -253,5 +253,19 @@ final class EquationTest: XCTestCase {
             XCTAssertEqual(actual, 36)
         } else { XCTFail() }
     }
+}
 
+final class SummationTest: XCTestCase {
+
+    func testIdentity() throws {
+        let equation = Equation(tokens: [.variable("k")])
+        let s = try XCTUnwrap(Summation(start: 1, end: 10, equation: equation))
+        XCTAssertEqual(s.eval, 55)
+    }
+
+    func testKSquared() throws {
+        let equation = try XCTUnwrap(Equation(infixString: "k^2"))
+        let s = try XCTUnwrap(Summation(start: 1, end: 10, equation: equation))
+        XCTAssertEqual(s.eval, 385)
+    }
 }
