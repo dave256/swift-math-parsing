@@ -600,7 +600,9 @@ public struct Equation {
             newNum = currentNum / 10
         }
         tokens.removeLast()
-        tokens.append(.number(newNum))
+        if newNum != 0 {
+            tokens.append(.number(newNum))
+        }
     }
 
     public func evaluate(overrideVariable: [String: Int64]? = nil) throws -> Int64 {
