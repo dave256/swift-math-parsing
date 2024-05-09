@@ -22,7 +22,13 @@ public struct Combinations: Int64Convertible {
     public init(n: Int, k: Int) {
         self.n = n
         self.k = k
-        if k > n - k {
+        if k > n {
+            eval = 0
+        }
+        else if n == k {
+            eval = 1
+        }
+        else if k > n - k {
             let num = (Int64(k+1)...Int64(n)).reduce(1, *)
             eval = num / factorial(n - k)
         } else {
