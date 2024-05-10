@@ -232,8 +232,8 @@ final class EquationTest: XCTestCase {
 
     func testAdd() throws {
         var e = Equation()
-        try e.addDigit(2)
-        try e.addDigit(3)
+        e.addDigit(2)
+        e.addDigit(3)
         e.addOperator(.add)
         e.addNumber(45)
         let actual = try e.evaluate()

@@ -212,6 +212,28 @@ enum PostfixError: Error {
     case overflow
 }
 
+extension PostfixError: CustomStringConvertible {
+    var description: String {
+        switch self {
+
+            case .containsParenthesis(let s, _, _):
+                return "parenthesis in postfix \(s)"
+            case .binaryOperatorMissingOperands(let s, _, _):
+                return "missing operarands for binary operator \(s)"
+            case .unaryOperatorMissingOperand(let s, _, _):
+                return "missing operarands for unary operator \(s)"
+            case .notOneValueOnStack(let count, _):
+                return "stack contains \(count) values instead of 1"
+            case .missingVariableValue(let s):
+                return "undefined variable \(s)"
+            case .overflow:
+                return "overflow error"
+        }
+    }
+    
+
+}
+
 // MARK: Token
 public enum Token {
     case leftParen
