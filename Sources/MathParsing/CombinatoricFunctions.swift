@@ -214,18 +214,21 @@ public struct Summation: Int64Convertible {
     }
 }
 
-public enum Kind: String, Equatable, Identifiable, CaseIterable {
+public enum Kind: String, CustomStringConvertible, Equatable, Identifiable, CaseIterable {
     case different
     case alike
 
     public var id: Self { self }
+    public var description: String { String(describing: self) }
 }
-public enum DistributionType: String, Equatable, Identifiable, CaseIterable {
+
+public enum DistributionType: String, CustomStringConvertible, Equatable, Identifiable, CaseIterable {
     case any
     case oneToOne = "1-1"
     case onto
 
     public var id: Self { self }
+    public var description: String { String(describing: self) }
 }
 
 public func twelveFold(n: Int, k: Int, balls: Kind, boxes: Kind, distribution: DistributionType) -> Int64Convertible {
