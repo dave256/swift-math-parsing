@@ -130,6 +130,31 @@ extension UnaryOperator: CustomStringConvertible {
     }
 }
 
+// MARK: UnaryOperator
+public enum PostfixUnaryOperator: Equatable {
+    case fact
+
+    func evaluate(value: Int64) -> Int64 {
+        switch self {
+            case .fact:
+                return factorial(Int(value))
+        }
+    }
+}
+
+extension PostfixUnaryOperator: Precedence {
+    public var precedence: Int { return 4 }
+}
+
+extension PostfixUnaryOperator: CustomStringConvertible {
+    public var description: String {
+        switch self {
+            case .fact:
+                return "!"
+        }
+    }
+}
+
 // MARK: Parsing Errors
 enum InfixToPostfixError: Error {
     // array of Tokens and the index or thr right parenthesis with no matching left parenthesis
@@ -155,6 +180,7 @@ public enum Token {
     case rightParen
     case binaryOperator(BinaryOperator)
     case unaryOperator(UnaryOperator)
+    case postfixUnaryOperator(PostfixUnaryOperator)
     case number(Int64)
     case numberConvertible(Int64Convertible)
     case variable(String)
@@ -240,6 +266,8 @@ extension Token: Precedence {
                 return 0
             case .variable(_):
                 return 0
+            case .postfixUnaryOperator(let op):
+                return op.precedence
         }
     }
 }
@@ -284,6 +312,8 @@ extension Token: CustomStringConvertible {
                 return "\(num.eval)"
             case .variable(let name):
                 return name
+            case .postfixUnaryOperator(let op):
+                return String(describing: op)
         }
     }
 }
@@ -346,6 +376,11 @@ extension [Token] {
                     postfix.append(token)
                 case .variable(_):
                     postfix.append(token)
+                case .postfixUnaryOperator(let op):
+                    switch op {
+                        case .fact:
+                            postfix.append(token)
+                    }
             }
         }
 
@@ -391,6 +426,14 @@ extension [Token] {
                 case .variable(let name):
                     guard let num = variableDictionary[name] else { throw PostfixError.missingVariableValue(name) }
                     stack.push(num)
+                case .postfixUnaryOperator(let op):
+                    switch op {
+                        case .fact:
+                            guard let num = stack.pop() else {
+                                throw PostfixError.unaryOperatorMissingOperand(String(describing: op), self, idx)
+                            }
+                            stack.push(op.evaluate(value: num))
+                    }
             }
         }
         guard stack.count == 1 else {
@@ -418,6 +461,7 @@ public struct AllowedToken: OptionSet {
     public static let rightParen = AllowedToken(rawValue: 1 << 5)
     public static let binaryOperator = AllowedToken(rawValue: 1 << 6)
     public static let unaryOperator = AllowedToken(rawValue: 1 << 7)
+    public static let postfixUnaryOperator = AllowedToken(rawValue: 1 << 8)
 }
 
 // MARK: Equation
@@ -430,8 +474,15 @@ public struct Equation {
         for ch in infixString {
             guard ch.isASCII else { return nil }
             let allow = allowableTokens
-            if ch == "k" {
-                addVariable("k")
+            if ch == "!" {
+                if allow.contains(.postfixUnaryOperator) {
+                    addPostfixUnaryOperator(.fact)
+                } else { return nil }
+            }
+            else if ch == "k" {
+                if allow.contains(.number) || allow.contains(.numberConvertible) {
+                    addVariable("k")
+                } else { return nil }
             } else if let digit = ch.wholeNumberValue {
                 if allow.contains(.digit) {
                     addDigit(digit)
@@ -491,9 +542,9 @@ public struct Equation {
 
             case .rightParen:
                 if unmatchedLeftParenCount > 0 {
-                    return [.binaryOperator, .rightParen]
+                    return [.binaryOperator, .postfixUnaryOperator, .rightParen]
                 } else {
-                    return [.binaryOperator]
+                    return [.binaryOperator, .postfixUnaryOperator]
                 }
 
             case .binaryOperator(_):
@@ -505,30 +556,36 @@ public struct Equation {
             case .number(let value):
                 if value != 0 {
                     if unmatchedLeftParenCount > 0 {
-                        return [.digit, .binaryOperator, .rightParen]
+                        return [.digit, .postfixUnaryOperator, .binaryOperator, .rightParen]
                     } else {
-                        return [.digit, .binaryOperator]
+                        return [.digit, .postfixUnaryOperator, .binaryOperator]
                     }
                 } else {
                     if unmatchedLeftParenCount > 0 {
-                        return [.digit, .binaryOperator, .rightParen, .number, .numberConvertible]
+                        return [.digit, .postfixUnaryOperator, .binaryOperator, .rightParen, .number, .numberConvertible]
                     } else {
-                        return [.digit, .binaryOperator, .number, .numberConvertible]
+                        return [.digit, .postfixUnaryOperator, .binaryOperator, .number, .numberConvertible]
                     }
                 }
 
             case .numberConvertible(_):
                 if unmatchedLeftParenCount > 0 {
-                    return [.binaryOperator, .rightParen]
+                    return [.postfixUnaryOperator, .binaryOperator, .rightParen]
                 } else {
-                    return [.binaryOperator]
+                    return [.postfixUnaryOperator, .binaryOperator]
                 }
 
             case .variable(_):
                 if unmatchedLeftParenCount > 0 {
-                    return [.binaryOperator, .rightParen]
+                    return [.postfixUnaryOperator, .binaryOperator, .rightParen]
                 } else {
-                    return [.binaryOperator]
+                    return [.postfixUnaryOperator, .binaryOperator]
+                }
+            case .postfixUnaryOperator(_):
+                if unmatchedLeftParenCount > 0 {
+                    return [.postfixUnaryOperator, .binaryOperator, .rightParen]
+                } else {
+                    return [.postfixUnaryOperator, .binaryOperator]
                 }
         }
     }
@@ -576,6 +633,10 @@ public struct Equation {
 
     public mutating func addUnaryOperator(_ op: UnaryOperator) {
         tokens.append(.unaryOperator(op))
+    }
+
+    public mutating func addPostfixUnaryOperator(_ op: PostfixUnaryOperator) {
+        tokens.append(.postfixUnaryOperator(op))
     }
 
     public mutating func addLeftParen() {

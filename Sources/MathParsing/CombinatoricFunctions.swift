@@ -5,7 +5,7 @@
 //  Created by David M Reed on 5/4/24.
 //
 
-func factorial(_ n: Int) -> Int64 {
+public func factorial(_ n: Int) -> Int64 {
     if n < 2 {
         return 1
     } else {

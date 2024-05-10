@@ -241,18 +241,53 @@ final class EquationTest: XCTestCase {
     }
 
     func testAddString() throws {
-        if let e = Equation(infixString: "23+ 45") {
-            let actual = try e.evaluate()
-            XCTAssertEqual(actual, 68)
-        } else { XCTFail() }
+        let e = try XCTUnwrap(Equation(infixString: "23+ 45"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 68)
     }
 
     func testNegationString() throws {
-        if let e = Equation(infixString: "60/-(2 + -(1 + 1) * 2) + 3 * 2") {
-            let actual = try e.evaluate()
-            XCTAssertEqual(actual, 36)
-        } else { XCTFail() }
+        let e = try XCTUnwrap(Equation(infixString: "60/-(2 + -(1 + 1) * 2) + 3 * 2"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 36)
     }
+
+    func testFactorial() throws {
+        let e = try XCTUnwrap(Equation(infixString: "5!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 120)
+    }
+
+    func testFactorialExpr1() throws {
+        let e = try XCTUnwrap(Equation(infixString: "5 * 4!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 120)
+    }
+
+    func testFactorialExpr2() throws {
+        let e = try XCTUnwrap(Equation(infixString: "5 + 4!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 29)
+    }
+
+    func testFactorialExprParen() throws {
+        let e = try XCTUnwrap(Equation(infixString: "(2 + 3)!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 120)
+    }
+
+    func testFactorialFactorial() throws {
+        let e = try XCTUnwrap(Equation(infixString: "3!!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 720)
+    }
+
+    func testFactorialFactorialParen() throws {
+        let e = try XCTUnwrap(Equation(infixString: "(3!)!"))
+        let actual = try e.evaluate()
+        XCTAssertEqual(actual, 720)
+    }
+
 }
 
 final class IntegerPartitionTests: XCTestCase {
