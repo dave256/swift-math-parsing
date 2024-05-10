@@ -731,6 +731,9 @@ public struct Equation {
         if newNum != 0 {
             tokens.append(.number(newNum))
         }
+        if tokens.count == 0 {
+            errorMessage = nil
+        }
     }
 
     public func evaluate(overrideVariable: [String: Int64]? = nil) throws -> Int64 {
