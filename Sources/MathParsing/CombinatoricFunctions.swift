@@ -219,7 +219,7 @@ public enum Kind: String, CustomStringConvertible, Equatable, Identifiable, Case
     case alike
 
     public var id: Self { self }
-    public var description: String { String(describing: self) }
+    public var description: String { rawValue }
 }
 
 public enum DistributionType: String, CustomStringConvertible, Equatable, Identifiable, CaseIterable {
@@ -228,7 +228,7 @@ public enum DistributionType: String, CustomStringConvertible, Equatable, Identi
     case onto
 
     public var id: Self { self }
-    public var description: String { String(describing: self) }
+    public var description: String { rawValue }
 }
 
 public func twelveFold(n: Int, k: Int, balls: Kind, boxes: Kind, distribution: DistributionType) -> Int64Convertible {
