@@ -214,13 +214,13 @@ public struct Summation: Int64Convertible {
     }
 }
 
-public enum Kind: String, Identifiable, CaseIterable {
+public enum Kind: String, Equatable, Identifiable, CaseIterable {
     case different
     case alike
 
     public var id: Self { self }
 }
-public enum DistributionType: String, Identifiable, CaseIterable {
+public enum DistributionType: String, Equatable, Identifiable, CaseIterable {
     case any
     case oneToOne = "1-1"
     case onto
