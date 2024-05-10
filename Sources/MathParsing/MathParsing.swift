@@ -506,6 +506,7 @@ public struct AllowedToken: OptionSet {
 public struct Equation {
     var tokens: [Token] = []
     var variableValues: [String: Int64]
+    var errorMessage: String? = nil
 
     public init?(infixString: String, variableValues: [String: Int64] = [:]) throws {
         self.variableValues = variableValues
@@ -523,7 +524,7 @@ public struct Equation {
                 } else { return nil }
             } else if let digit = ch.wholeNumberValue {
                 if allow.contains(.digit) {
-                    try addDigit(digit)
+                    addDigit(digit)
                 } else { return nil }
             } else if ch == "(" {
                 if allow.contains(.leftParen) {
@@ -628,10 +629,16 @@ public struct Equation {
         }
     }
 
-    public mutating func addDigit(_ digit: Int) throws {
+    public mutating func addDigit(_ digit: Int) {
         if let lastToken = tokens.last, let num = lastToken.number {
             tokens.removeLast()
-            tokens.append(.number(try num.mul(rhs: 10).add(rhs: Int64(digit))))
+            do {
+                tokens.append(.number(try num.mul(rhs: 10).add(rhs: Int64(digit))))
+            } catch PostfixError.overflow {
+                errorMessage = "overflow"
+            } catch {
+                errorMessage = "error"
+            }
         } else {
             tokens.append(.number(Int64(digit)))
         }
@@ -715,6 +722,9 @@ public struct Equation {
 
 extension Equation: CustomStringConvertible {
     public var description: String {
+        if let errorMessage {
+            return errorMessage
+        }
         let tokenStrings = tokens.map { String(describing: $0) }
         return String(describing: tokenStrings.joined(separator: " "))
     }
