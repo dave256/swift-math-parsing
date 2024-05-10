@@ -717,6 +717,10 @@ public struct Equation {
     }
 
     public mutating func deleteLast() {
+        guard tokens.count > 0 else {
+            errorMessage = nil
+            return
+        }
         guard let lastToken = tokens.last, let currentNum = lastToken.number else {
             tokens.removeLast()
             return
