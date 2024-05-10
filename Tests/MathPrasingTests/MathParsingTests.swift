@@ -6,7 +6,7 @@ final class InfixToPostfixTests: XCTestCase {
         let infixTokens: [Token] = [
             .number(2),
             .binaryOperator(.mul),
-            .numberConvertible(Combinations(n: 5, k: 2)),
+            .numberConvertible(try Combinations(n: 5, k: 2)),
         ]
 
         let postfix: [Token] = [
@@ -232,8 +232,8 @@ final class EquationTest: XCTestCase {
 
     func testAdd() throws {
         var e = Equation()
-        e.addDigit(2)
-        e.addDigit(3)
+        try e.addDigit(2)
+        try e.addDigit(3)
         e.addOperator(.add)
         e.addNumber(45)
         let actual = try e.evaluate()
@@ -296,20 +296,20 @@ final class IntegerPartitionTests: XCTestCase {
         let k = 10
         let expected: Int64 = 3
 
-        let actual = IntegerPartition(n: n, k: k).eval
+        let actual = try IntegerPartition(n: n, k: k).eval
         XCTAssertEqual(actual, expected)
     }
 }
 
 final class CombinatoricFunctionTests: XCTestCase {
-    func testOnto() {
-        let actual = OntoFunctions(n: 3, k: 7).eval
+    func testOnto() throws {
+        let actual = try OntoFunctions(n: 3, k: 7).eval
         XCTAssertEqual(actual, 1806)
 
     }
 
-    func testStirling() {
-        let actual = Stirling2(n: 3, k: 7).eval
+    func testStirling() throws {
+        let actual = try Stirling2(n: 3, k: 7).eval
         XCTAssertEqual(actual, 301)
     }
 }

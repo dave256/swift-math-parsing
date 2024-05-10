@@ -1,9 +1,45 @@
+extension Int64 {
 
-func power(_ base: Int64, _ exp: Int64) -> Int64 {
+    func add(rhs: Int64) throws -> Int64 {
+        let (result, overflow) = self.addingReportingOverflow(rhs)
+        if overflow {
+            throw PostfixError.overflow
+        }
+        return result
+    }
+
+    func sub(rhs: Int64) throws -> Int64 {
+        let (result, overflow) = self.subtractingReportingOverflow(rhs)
+        if overflow {
+            throw PostfixError.overflow
+        }
+        return result
+    }
+
+    func mul(rhs: Int64) throws -> Int64 {
+        let (result, overflow) =
+        self.multipliedReportingOverflow(by: rhs)
+        if overflow {
+            throw PostfixError.overflow
+        }
+        return result
+    }
+
+    func div(rhs: Int64) throws -> Int64 {
+        let (result, overflow) = self.dividedReportingOverflow(by: rhs)
+        if overflow {
+            throw PostfixError.overflow
+        }
+        return result
+    }
+}
+
+
+func power(_ base: Int64, _ exp: Int64) throws -> Int64 {
     var result: Int64 = 1
     if exp > 0 {
         for _ in 0..<exp {
-            result *= base
+            result = try result.mul(rhs: base)
         }
     }
     return result
@@ -63,20 +99,20 @@ extension BinaryOperator: Precedence {
         }
     }
 
-    func evaluate(lhs: Int64, rhs: Int64) -> Int64 {
+    func evaluate(lhs: Int64, rhs: Int64) throws -> Int64 {
         switch self {
             case .add:
-                return lhs + rhs
+                return try lhs.add(rhs: rhs)
             case .sub:
-                return lhs - rhs
+                return try lhs.sub(rhs: rhs)
             case .mul:
-                return lhs * rhs
+                return try lhs.mul(rhs: rhs)
             case .div:
-                return lhs / rhs
+                return try lhs.div(rhs: rhs)
             case .mod:
                 return lhs % rhs
             case .pow, .exp:
-                return power(lhs, rhs)
+                return try power(lhs, rhs)
         }
     }
 }
@@ -134,10 +170,10 @@ extension UnaryOperator: CustomStringConvertible {
 public enum PostfixUnaryOperator: Equatable {
     case fact
 
-    func evaluate(value: Int64) -> Int64 {
+    func evaluate(value: Int64) throws -> Int64 {
         switch self {
             case .fact:
-                return factorial(Int(value))
+                return try factorial(Int(value))
         }
     }
 }
@@ -162,7 +198,7 @@ enum InfixToPostfixError: Error {
 }
 
 enum PostfixError: Error {
-    // parenthesis (left or right), array of Tokens, and index of the parenthesis
+    /// parenthesis (left or right), array of Tokens, and index of the parenthesis
     case containsParenthesis(String, [Token], Int)
     // operand, array of Tokens, and index of the operand
     case binaryOperatorMissingOperands(String, [Token], Int)
@@ -172,6 +208,8 @@ enum PostfixError: Error {
     case notOneValueOnStack(Int, [Token])
     /// missing value for variable
     case missingVariableValue(String)
+    /// arithmetic overflow
+    case overflow
 }
 
 // MARK: Token
@@ -409,7 +447,7 @@ extension [Token] {
                     guard let rhs = stack.pop(), let lhs = stack.pop() else {
                         throw PostfixError.binaryOperatorMissingOperands(String(describing: op), self, idx)
                     }
-                    stack.push(op.evaluate(lhs: lhs, rhs: rhs))
+                    stack.push(try op.evaluate(lhs: lhs, rhs: rhs))
 
                 case .unaryOperator(let op):
                     guard let num = stack.pop() else {
@@ -432,7 +470,7 @@ extension [Token] {
                             guard let num = stack.pop() else {
                                 throw PostfixError.unaryOperatorMissingOperand(String(describing: op), self, idx)
                             }
-                            stack.push(op.evaluate(value: num))
+                            stack.push(try op.evaluate(value: num))
                     }
             }
         }
@@ -469,7 +507,7 @@ public struct Equation {
     var tokens: [Token] = []
     var variableValues: [String: Int64]
 
-    public init?(infixString: String, variableValues: [String: Int64] = [:]) {
+    public init?(infixString: String, variableValues: [String: Int64] = [:]) throws {
         self.variableValues = variableValues
         for ch in infixString {
             guard ch.isASCII else { return nil }
@@ -485,7 +523,7 @@ public struct Equation {
                 } else { return nil }
             } else if let digit = ch.wholeNumberValue {
                 if allow.contains(.digit) {
-                    addDigit(digit)
+                    try addDigit(digit)
                 } else { return nil }
             } else if ch == "(" {
                 if allow.contains(.leftParen) {
@@ -590,10 +628,10 @@ public struct Equation {
         }
     }
 
-    public mutating func addDigit(_ digit: Int) {
+    public mutating func addDigit(_ digit: Int) throws {
         if let lastToken = tokens.last, let num = lastToken.number {
             tokens.removeLast()
-            tokens.append(.number(num * 10 + Int64(digit)))
+            tokens.append(.number(try num.mul(rhs: 10).add(rhs: Int64(digit))))
         } else {
             tokens.append(.number(Int64(digit)))
         }
