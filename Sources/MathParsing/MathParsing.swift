@@ -170,7 +170,7 @@ extension Token {
         }
     }
 
-    var isRighttParen: Bool {
+    var isRightParen: Bool {
         switch self {
             case .rightParen:
                 return true
